@@ -1,0 +1,9 @@
+<form action="{% url 'purchase_item' item_id %}" method="post">
+    {% csrf_token %}
+    <!-- Shipping information fields -->
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name">
+    <!-- Other shipping information fields -->
+    <!-- Submit button -->
+    <input type="submit" value="Submit">
+</form>
