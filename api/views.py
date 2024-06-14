@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-
+from rest_framework.views import APIView
 from rest_framework import viewsets
 from item.models import Category, Item
 from .serializers import CategorySerializer, ItemSerializer
@@ -12,35 +12,37 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from .serializers import RegisterSerializer, LoginSerializer
 from rest_framework.permissions import IsAuthenticated
-
-
+from .serializers import UserSerializer
+from rest_framework.exceptions import AuthenticationFailed
+import jwt
+import datetime
+from django.conf import settings
+from rest_framework.permissions import AllowAny
 
 class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.all()  # Ensure this is correct for your needs
+    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
 
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        user = User.objects.get(email=request.data['email'])
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+    def get_serializer_class(self):
+        return RegisterSerializer
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_object(self):
+        return self.request.user
 
-class LoginView(ObtainAuthToken):
-    serializer_class = LoginSerializer
+    def put(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            user = authenticate(username=serializer.validated_data['email'], password=serializer.validated_data['password'])
-            if user:
-                token, created = Token.objects.get_or_create(user=user)
-                return Response({'token': token.key}, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    def patch(self, request, *args, **kwargs):
+        return self.put(request, *args, **kwargs)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -50,3 +52,17 @@ class ItemViewSet(viewsets.ModelViewSet):
     
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Add custom claims, if needed
+        # token['username'] = user.username
+        return token
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer    

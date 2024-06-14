@@ -42,7 +42,14 @@ INSTALLED_APPS = [
     'item',
     'rest_framework.authtoken',
     'rest_framework',
-    'api',
+    
+    'corsheaders',
+    "api.apps.ApiConfig",
+    'rest_framework_simplejwt.token_blacklist',
+
+    
+    
+
 
 
     
@@ -56,6 +63,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = 'puddle.urls'
@@ -104,6 +113,7 @@ REST_FRAMEWORK = {
 
      'DEFAULT_AUTHENTICATION_CLASSES': (
          'rest_framework.authentication.TokenAuthentication',
+         'rest_framework_simplejwt.authentication.JWTAuthentication',
          # ...
      ),
 
@@ -116,7 +126,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
