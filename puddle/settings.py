@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'item',
     'rest_framework.authtoken',
     'rest_framework',
+    'chatbot',
     
     'corsheaders',
     "api.apps.ApiConfig",
@@ -115,7 +116,9 @@ REST_FRAMEWORK = {
          'rest_framework.authentication.TokenAuthentication',
          'rest_framework_simplejwt.authentication.JWTAuthentication',
          # ...
-     ),
+     ),'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
 
      # ...
  }

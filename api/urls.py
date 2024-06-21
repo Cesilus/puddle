@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, ItemViewSet, RegisterView, MyTokenObtainPairView
+from .views import CategoryViewSet, ItemViewSet, RegisterView, LoginView
 
 # Initialize the router
 router = DefaultRouter()
@@ -13,5 +13,5 @@ urlpatterns = [
     
     # Add paths for registration and login
     path('register/', RegisterView.as_view(), name='register'),
-    path('login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/',  LoginView.as_view(), name='login'),
 ]

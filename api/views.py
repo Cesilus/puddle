@@ -14,18 +14,42 @@ from .serializers import RegisterSerializer, LoginSerializer
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from rest_framework.exceptions import AuthenticationFailed
-import jwt
-import datetime
+import jwt, datetime
 from django.conf import settings
 from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
 
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()  # Ensure this is correct for your needs
-    permission_classes = [AllowAny]
-    serializer_class = RegisterSerializer
 
-    def get_serializer_class(self):
-        return RegisterSerializer
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]  # Allows anyone to access this view
+
+    def post(self, request):
+        # Check the content type to ensure it's JSON
+        if request.content_type != 'application/json':
+            return Response({"detail": "Unsupported media type, expected application/json"}, status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+        # Parse and validate the request data using the serializer
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                })
+            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status)
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -64,5 +88,3 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # token['username'] = user.username
         return token
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer    
